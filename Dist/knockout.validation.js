@@ -22,7 +22,7 @@
     }
 }(function ( ko, exports ) {
 
-    if (typeof (ko) === undefined) { throw 'Knockout is required, please ensure it is loaded before loading this validation plug-in'; }
+    if (typeof (ko) === 'undefined') { throw 'Knockout is required, please ensure it is loaded before loading this validation plug-in'; }
 
     // create our namespace object
     ko.validation = exports;
@@ -48,6 +48,7 @@ var defaults = {
 	errorClass: null,               // single class for error message and element
 	errorElementClass: 'validationElement',  // class to decorate error element
 	errorMessageClass: 'validationMessage',  // class to decorate error message
+  errorMessageNodeType: 'SPAN', // Node type to insert for error messages
 	allowHtmlMessages: false,		// allows HTML in validation messages
 	grouping: {
 		deep: false,        //by default grouping is shallow
@@ -56,7 +57,8 @@ var defaults = {
 	},
 	validate: {
 		// throttle: 10
-	}
+	},
+	messagePlacement: 'after' // Where to place messages relative to the input element. Options are: 'before', 'after'.
 };
 
 // make a copy  so we can use 'reset' later
@@ -118,6 +120,9 @@ kv.configuration = configuration;
 		},
 		insertAfter: function (node, newNode) {
 			node.parentNode.insertBefore(newNode, node.nextSibling);
+		},
+		insertBefore: function(node, newNode) {
+			node.parentNode.insertBefore(newNode, node);
 		},
 		newId: function () {
 			return seedId += 1;
@@ -276,7 +281,7 @@ kv.configuration = configuration;
 	function collectErrors(array) {
 		var errors = [];
 		forEach(array, function (observable) {
-			if (!observable.isValid()) {
+			if (!observable.isValid() && observable.error) {
 				errors.push(observable.error());
 			}
 		});
@@ -453,7 +458,7 @@ kv.configuration = configuration;
 				//	  }
 				//  )};
 				//
-				if (params && (params.message || params.onlyIf)) { //if it has a message or condition object, then its an object literal to use
+				if (params && (Object.prototype.hasOwnProperty.call(params, "message") || params.onlyIf)) { //if it has a message or condition object, then its an object literal to use
 					return kv.addRule(observable, {
 						rule: ruleName,
 						message: params.message,
@@ -485,9 +490,16 @@ kv.configuration = configuration;
 
 		//creates a span next to the @element with the specified error class
 		insertValidationMessage: function (element) {
-			var span = document.createElement('SPAN');
-			span.className = utils.getConfigOptions(element).errorMessageClass;
-			utils.insertAfter(element, span);
+			var nodeType = kv.configuration.errorMessageNodeType || 'SPAN';
+			var span = document.createElement(nodeType);
+			var config = utils.getConfigOptions(element);
+			var placement = (config.messagePlacement || kv.configuration.messagePlacement || 'after');
+			span.className = config.errorMessageClass;
+			if (placement === 'before') {
+				utils.insertBefore(element, span);
+			} else {
+				utils.insertAfter(element, span);
+			}
 			return span;
 		},
 
@@ -572,9 +584,16 @@ kv.configuration = configuration;
 
 		//take an existing binding handler and make it cause automatic validations
 		makeBindingHandlerValidatable: function (handlerName) {
-			var init = ko.bindingHandlers[handlerName].init;
-
-			ko.bindingHandlers[handlerName].init = function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+			var bindingHandler = ko.bindingHandlers[handlerName],
+				init;
+      
+			if (!bindingHandler) {
+				return;
+			}
+      
+			init = bindingHandler.init;
+      
+			bindingHandler.init = function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
 
 				init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
 
@@ -962,6 +981,7 @@ ko.bindingHandlers['validationCore'] = (function () {
 // override for KO's default 'value' and 'checked' bindings
 kv.makeBindingHandlerValidatable("value");
 kv.makeBindingHandlerValidatable("checked");
+kv.makeBindingHandlerValidatable("textInput");
 
 
 ko.bindingHandlers['validationMessage'] = { // individual error message, if modified or post binding
@@ -1337,9 +1357,16 @@ ko.validatedObservable = function (initialValue) {
 	var obsv = ko.observable(initialValue);
 	obsv.errors = kv.group(initialValue);
 	obsv.isValid = ko.observable(initialValue.isValid());	
-	obsv.errors.subscribe(function (errors) {
-		obsv.isValid(errors.length === 0);
-	});
+	
+	if (ko.isObservable(obsv.errors)) {
+		obsv.errors.subscribe(function(errors) {
+			obsv.isValid(errors.length === 0);
+		});
+	} else {
+		ko.computed(obsv.errors).subscribe(function(errors) {
+			obsv.isValid(errors.length === 0);
+		});
+	}
 
 	return obsv;
 };
