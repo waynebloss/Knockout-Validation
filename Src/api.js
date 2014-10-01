@@ -293,7 +293,8 @@
 
 		//creates a span next to the @element with the specified error class
 		insertValidationMessage: function (element) {
-			var span = document.createElement('SPAN');
+			var nodeType = ko.validation.configuration.errorMessageNodeType || 'SPAN';
+			var span = document.createElement(nodeType);
 			var config = utils.getConfigOptions(element);
 			span.className = config.errorMessageClass;
 			if (config.messagePlacement && config.messagePlacement === 'before') {
