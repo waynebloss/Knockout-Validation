@@ -294,8 +294,13 @@
 		//creates a span next to the @element with the specified error class
 		insertValidationMessage: function (element) {
 			var span = document.createElement('SPAN');
-			span.className = utils.getConfigOptions(element).errorMessageClass;
-			utils.insertAfter(element, span);
+			var config = utils.getConfigOptions(element);
+			span.className = config.errorMessageClass;
+			if (config.messagePlacement && config.messagePlacement === 'before') {
+				utils.insertBefore(element, span);
+			} else {
+				utils.insertAfter(element, span);
+			}
 			return span;
 		},
 

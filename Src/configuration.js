@@ -22,7 +22,8 @@ var defaults = {
 	},
 	validate: {
 		// throttle: 10
-	}
+	},
+	messagePlacement: 'after' // Where to place messages relative to the input element. Options are: 'before', 'after'.
 };
 
 // make a copy  so we can use 'reset' later

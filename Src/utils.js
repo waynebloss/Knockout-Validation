@@ -47,6 +47,9 @@
 		insertAfter: function (node, newNode) {
 			node.parentNode.insertBefore(newNode, node.nextSibling);
 		},
+		insertBefore: function(node, newNode) {
+			node.parentNode.insertBefore(newNode, node);
+		},
 		newId: function () {
 			return seedId += 1;
 		},
