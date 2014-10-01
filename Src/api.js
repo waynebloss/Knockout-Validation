@@ -261,7 +261,7 @@
 				//	  }
 				//  )};
 				//
-				if (params && (params.message || params.onlyIf)) { //if it has a message or condition object, then its an object literal to use
+				if (params && (Object.prototype.hasOwnProperty.call(params, "message") || params.onlyIf)) { //if it has a message or condition object, then its an object literal to use
 					return ko.validation.addRule(observable, {
 						rule: ruleName,
 						message: params.message,
