@@ -387,9 +387,16 @@
 
 		//take an existing binding handler and make it cause automatic validations
 		makeBindingHandlerValidatable: function (handlerName) {
-			var init = ko.bindingHandlers[handlerName].init;
-
-			ko.bindingHandlers[handlerName].init = function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+			var bindingHandler = ko.bindingHandlers[handlerName],
+				init;
+      
+			if (!bindingHandler) {
+				return;
+			}
+      
+			init = bindingHandler.init;
+      
+			bindingHandler.init = function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
 
 				init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
 
