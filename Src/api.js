@@ -296,8 +296,9 @@
 			var nodeType = ko.validation.configuration.errorMessageNodeType || 'SPAN';
 			var span = document.createElement(nodeType);
 			var config = utils.getConfigOptions(element);
+			var placement = (config.messagePlacement || ko.validation.configuration.messagePlacement || 'after');
 			span.className = config.errorMessageClass;
-			if (config.messagePlacement && config.messagePlacement === 'before') {
+			if (placement === 'before') {
 				utils.insertBefore(element, span);
 			} else {
 				utils.insertAfter(element, span);
